@@ -42,10 +42,6 @@ export function SetupPage() {
       return
     }
 
-    // Determine which team bats and which bowls based on selector
-    const battingTeamName = selectedBattingTeam === 'teamA' ? teamA : teamB
-    const bowlingTeamName = selectedBattingTeam === 'teamA' ? teamB : teamA
-
     startMatch({
       teamA,
       teamB,
