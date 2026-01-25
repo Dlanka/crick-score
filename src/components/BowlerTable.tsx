@@ -17,13 +17,6 @@ export function BowlerTable() {
     return economyA - economyB
   })
 
-  // Calculate overs: balls / 6, format as overs.balls (e.g., 3.4 = 3 overs 4 balls)
-  const formatOvers = (balls: number): string => {
-    const overs = Math.floor(balls / 6)
-    const remainingBalls = balls % 6
-    return `${overs}.${remainingBalls}`
-  }
-
   // Calculate economy rate: runs / overs
   const calculateEconomy = (runs: number, balls: number): number => {
     const overs = balls / 6
@@ -51,26 +44,25 @@ export function BowlerTable() {
                   Bowler
                 </th>
                 <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  O
-                </th>
-                <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  M
-                </th>
-                <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                   R
                 </th>
                 <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  W
+                  B
                 </th>
                 <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Econ
+                  4s
+                </th>
+                <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  6s
+                </th>
+                <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  ER
                 </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {bowlerEntries.map(([name, stats]) => {
                 const isCurrentBowler = name === currentBowler
-                const overs = formatOvers(stats.balls)
                 const economy = calculateEconomy(stats.runs, stats.balls)
 
                 return (
@@ -89,16 +81,16 @@ export function BowlerTable() {
                       )}
                     </td>
                     <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-900 text-right tabular-nums">
-                      {overs}
-                    </td>
-                    <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-900 text-right tabular-nums">
-                      {stats.maidens}
-                    </td>
-                    <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-900 text-right tabular-nums">
                       {stats.runs}
                     </td>
                     <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-900 text-right tabular-nums">
-                      {stats.wickets}
+                      {stats.balls}
+                    </td>
+                    <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-900 text-right tabular-nums">
+                      {stats.fours}
+                    </td>
+                    <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-900 text-right tabular-nums">
+                      {stats.sixes}
                     </td>
                     <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-900 text-right tabular-nums">
                       {economy.toFixed(2)}

@@ -328,10 +328,15 @@ export function ScoringPage() {
     }
 
     // Priority order:
-    // 1. If wicket is selected → call addWicket
+    // 1. If wicket is selected → call addWicket (with runs if any)
     if (wicket && wicketType) {
-      const newBatterName = wicketState.newBatterName.trim() || `Batter ${score.wickets + 1}`
-      addWicket(wicketType, newBatterName)
+      const newBatterName = wicketState.newBatterName.trim()
+      // Require batter name - never use placeholder
+      if (!newBatterName) {
+        return // Cannot proceed without batter name
+      }
+      const runsWithWicket = runValue || 0
+      addWicket(wicketType, newBatterName, wicketState.runOutBatsman, runsWithWicket)
     }
     // 2. Else if any extra is selected → call addExtra
     else if (wide || noBall || byes || legByes) {
@@ -355,8 +360,9 @@ export function ScoringPage() {
           // No Ball + Leg Byes → { type: 'NB', runs: 1 + legByes }
           additionalRuns = runValue || 0
         } else {
-          // No Ball only → { type: 'NB', runs: 1 }
-          additionalRuns = 0
+          // No Ball + runs → { type: 'NB', runs: 1 + runValue }
+          // No Ball always adds 1, plus any runs scored
+          additionalRuns = runValue || 0
         }
       }
       // Byes only (without No Ball)
@@ -420,58 +426,18 @@ export function ScoringPage() {
       return // Don't submit if batter name not provided
     }
 
-    // 1. Call addWicket(wicketType, newBatterName, runOutBatsman)
     // For run-out types, pass the selected batsman who is out
     const runOutBatsman = (wicketType === 'runOutStriker' || wicketType === 'runOutNonStriker') 
       ? wicketState.runOutBatsman 
       : undefined
-    addWicket(wicketType, newBatterName, runOutBatsman)
-
-    // 2. Apply run / extra logic if applicable
-    const { wide, noBall, byes, legByes } = extrasState
     
-    // If extras are selected, apply them
-    if (wide || noBall || byes || legByes) {
-      // Map UI selections to scoring logic payloads
-      let extraType: 'wide' | 'noBall' | 'byes' | 'legByes' = 'wide' // Default, will be overridden
-      let additionalRuns = 0
-
-      // Priority: Wide (cannot coexist with Byes/Leg Byes per validation)
-      if (wide) {
-        extraType = 'wide'
-        additionalRuns = pendingRunValue || 0
-      }
-      // No Ball combinations
-      else if (noBall) {
-        extraType = 'noBall'
-        if (byes) {
-          // No Ball + Byes → { type: 'NB', runs: 1 + byes }
-          additionalRuns = pendingRunValue || 0
-        } else if (legByes) {
-          // No Ball + Leg Byes → { type: 'NB', runs: 1 + legByes }
-          additionalRuns = pendingRunValue || 0
-        } else {
-          // No Ball only → { type: 'NB', runs: 1 }
-          additionalRuns = 0
-        }
-      }
-      // Byes only (without No Ball)
-      else if (byes) {
-        extraType = 'byes'
-        additionalRuns = pendingRunValue || 0
-      }
-      // Leg Byes only (without No Ball)
-      else if (legByes) {
-        extraType = 'legByes'
-        additionalRuns = pendingRunValue || 0
-      }
-
-      addExtra(extraType, additionalRuns)
-    }
-    // If no extras but there's a run value (e.g., run out with runs)
-    else if (pendingRunValue !== null && pendingRunValue > 0) {
-      addRun(pendingRunValue)
-    }
+    // Get runs scored with wicket (if any)
+    // Wicket + runs = single ball event (e.g., caught off a boundary)
+    const runsWithWicket = pendingRunValue || 0
+    
+    // Call addWicket with runs (single ball event)
+    // Note: Extras (wide/noBall) cannot occur with wicket, so we only handle runs
+    addWicket(wicketType, newBatterName, runOutBatsman, runsWithWicket)
 
     // Reset all UI state after successful submission
     resetUIState()
@@ -512,18 +478,6 @@ export function ScoringPage() {
                 <h2 className="text-xl font-bold text-red-800">Match Abandoned</h2>
                 <p className="text-sm text-red-600 mt-1">Scoring has been disabled</p>
               </div>
-            </div>
-          )}
-
-          {/* Show Skip First Innings button if in first innings and match is in progress */}
-          {innings === 1 && matchStatus === 'IN_PROGRESS' && !firstInningsEnded && (
-            <div className="text-center">
-              <button
-                onClick={() => setShowSkipFirstInningsModal(true)}
-                className="score-button bg-orange-500 text-white hover:bg-orange-600 touch-target w-full shadow-md"
-              >
-                Skip First Innings
-              </button>
             </div>
           )}
 
@@ -633,20 +587,31 @@ export function ScoringPage() {
           {/* New Match & Abandoned Action Card - After Control Panel */}
           {(matchStatus === 'IN_PROGRESS' || matchStatus === 'COMPLETE' || matchStatus === 'ABANDONED') && (
             <div className="score-card">
-              <div className="flex gap-3">
-                <button
-                  onClick={handleNewMatchClick}
-                  className="flex-1 score-button bg-blue-500 text-white hover:bg-blue-600 touch-target shadow-md"
-                >
-                  New Match
-                </button>
-                <button
-                  onClick={handleAbandonClick}
-                  disabled={matchStatus === 'ABANDONED'}
-                  className="flex-1 score-button bg-red-500 text-white hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed touch-target shadow-md"
-                >
-                  Abandoned
-                </button>
+              <div className="space-y-3">
+                {/* Skip First Innings button - only show in first innings, full width */}
+                {innings === 1 && matchStatus === 'IN_PROGRESS' && !firstInningsEnded && (
+                  <button
+                    onClick={() => setShowSkipFirstInningsModal(true)}
+                    className="w-full score-button bg-orange-500 text-white hover:bg-orange-600 touch-target shadow-md"
+                  >
+                    Skip First Innings
+                  </button>
+                )}
+                <div className="flex gap-3">
+                  <button
+                    onClick={handleNewMatchClick}
+                    className="flex-1 score-button bg-blue-500 text-white hover:bg-blue-600 touch-target shadow-md"
+                  >
+                    New Match
+                  </button>
+                  <button
+                    onClick={handleAbandonClick}
+                    disabled={matchStatus === 'ABANDONED'}
+                    className="flex-1 score-button bg-red-500 text-white hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed touch-target shadow-md"
+                  >
+                    Abandoned
+                  </button>
+                </div>
               </div>
             </div>
           )}

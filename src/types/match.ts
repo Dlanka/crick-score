@@ -24,15 +24,53 @@ export type Bowler = {
   wickets: number
   /** Number of maiden overs (overs with 0 runs) bowled */
   maidens: number
+  /** Number of fours (boundaries worth 4 runs) conceded - legal deliveries only */
+  fours: number
+  /** Number of sixes (boundaries worth 6 runs) conceded - legal deliveries only */
+  sixes: number
+}
+
+/**
+ * Snapshot of state before a ball event (for undo functionality)
+ */
+export type BallEventSnapshot = {
+  /** Player IDs at the time of the event */
+  strikerId: string
+  nonStrikerId: string
+  bowlerId: string
+  /** Bowler stats before this ball */
+  bowlerBallsBefore: number
+  bowlerRunsBefore: number
+  bowlerWicketsBefore: number
+  bowlerFoursBefore: number
+  bowlerSixesBefore: number
+  /** Striker stats before this ball */
+  strikerRunsBefore: number
+  strikerBallsBefore: number
+  strikerFoursBefore: number
+  strikerSixesBefore: number
+  /** Score before this ball */
+  scoreRunsBefore: number
+  scoreWicketsBefore: number
+  scoreBallsBefore: number
+  /** Current over state before this ball */
+  currentOverBallsBefore: number[]
+  currentOverBallNumberBefore: number
+  /** For wicket events: fallen batsman ID and new batter ID */
+  fallenBatsmanId?: string
+  newBatterId?: string
 }
 
 /**
  * Ball event in the match history
+ * Stores snapshot of state before the event for reliable undo
  */
 export type BallEvent = {
   type: 'run' | 'extra' | 'wicket'
-  value?: number
-  kind?: string
+  value?: number // Runs scored (for run events, or runs with wicket/extra events)
+  kind?: string // Extra type (wide/noBall/byes/legByes) or wicket type
+  /** Snapshot of state before this event - used for undo */
+  snapshot: BallEventSnapshot
 }
 
 /**
