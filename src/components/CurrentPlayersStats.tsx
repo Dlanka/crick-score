@@ -20,6 +20,13 @@ export function CurrentPlayersStats({ onBowlerClick }: CurrentPlayersStatsProps)
     return Math.round((runs / balls) * 100 * 100) / 100
   }
 
+  // Calculate overs: balls / 6, format as overs.balls
+  const formatOvers = (balls: number): string => {
+    const overs = Math.floor(balls / 6)
+    const remainingBalls = balls % 6
+    return `${overs}.${remainingBalls}`
+  }
+
   // Calculate economy rate: runs / overs
   const calculateEconomy = (runs: number, balls: number): number => {
     const overs = balls / 6
@@ -109,10 +116,10 @@ export function CurrentPlayersStats({ onBowlerClick }: CurrentPlayersStatsProps)
               Bowler
             </th>
             <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-              R
+              O
             </th>
             <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-              B
+              R
             </th>
             <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
               4s
@@ -137,10 +144,10 @@ export function CurrentPlayersStats({ onBowlerClick }: CurrentPlayersStatsProps)
                 {currentPlayers.bowler}
               </td>
               <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-900 text-right tabular-nums">
-                {bowlerStats.runs}
+                {formatOvers(bowlerStats.balls)}
               </td>
               <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-900 text-right tabular-nums">
-                {bowlerStats.balls}
+                {bowlerStats.runs}
               </td>
               <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-900 text-right tabular-nums">
                 {bowlerStats.fours}
