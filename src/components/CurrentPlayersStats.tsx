@@ -62,7 +62,6 @@ export function CurrentPlayersStats({ onBowlerClick }: CurrentPlayersStatsProps)
 
   const extrasTotal =
     extras.byes + extras.legByes + extras.wides + extras.noBalls
-  const extrasValue = `${extrasTotal} (${extras.wides} WD, ${extras.byes} B, ${extras.legByes} LB, ${extras.noBalls} NB)`
 
   return (
     <div className="w-full space-y-2">
