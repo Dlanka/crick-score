@@ -66,7 +66,7 @@ export type BallEventSnapshot = {
  * Stores snapshot of state before the event for reliable undo
  */
 export type BallEvent = {
-  type: 'run' | 'extra' | 'wicket'
+  type: 'run' | 'extra' | 'wicket' | 'retire'
   value?: number // Runs scored (for run events, or runs with wicket/extra events)
   kind?: string // Extra type (wide/noBall/byes/legByes) or wicket type
   /** Snapshot of state before this event - used for undo */
@@ -88,6 +88,23 @@ export type CurrentOver = {
  * Match status types
  */
 export type MatchStatus = 'SETUP' | 'IN_PROGRESS' | 'COMPLETE' | 'ABANDONED'
+
+/**
+ * Snapshot of a single innings for summary display
+ */
+export type InningsRecord = {
+  battingTeam: string
+  bowlingTeam: string
+  innings: number
+  score: {
+    runs: number
+    wickets: number
+    balls: number
+  }
+  batters: Record<string, Batter>
+  bowlers: Record<string, Bowler>
+  history: BallEvent[]
+}
 
 /**
  * Match state containing all match information
@@ -141,4 +158,7 @@ export type MatchState = {
 
   /** Complete history of all ball events in the match */
   history: BallEvent[]
+
+  /** Completed innings records for summary display */
+  inningsRecords: InningsRecord[]
 }

@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { MatchState, BallEvent, BallEventSnapshot, Batter, Bowler, MatchStatus } from '../types/match'
+import { MatchState, BallEvent, BallEventSnapshot, Batter, Bowler, MatchStatus, InningsRecord } from '../types/match'
 
 interface MatchConfig {
   teamA: string
@@ -18,6 +18,8 @@ interface MatchStore extends MatchState {
   addExtra: (type: 'wide' | 'noBall' | 'byes' | 'legByes', runs?: number) => void
   addWicket: (kind: string, newBatterName: string, runOutBatsman?: string, runs?: number) => void
   undoLastBall: () => void
+  swapBatters: () => void
+  retireBatter: (retiringBatter: string, newBatterName: string, reason?: string) => void
   startSecondInnings: (striker: string, nonStriker: string, bowler: string) => void
   forceSkipFirstInnings: (target: number) => void
   skipFirstInningsWithSetup: (target: number, striker: string, nonStriker: string, bowler: string) => void
@@ -55,6 +57,7 @@ const initialState: MatchState = {
   batters: {},
   bowlers: {},
   history: [],
+  inningsRecords: [],
 }
 
 /**
@@ -113,6 +116,24 @@ const createSnapshot = (state: MatchState): BallEventSnapshot => {
   }
 }
 
+/**
+ * Create an innings record for summary view
+ */
+const createInningsRecord = (state: MatchState): InningsRecord => {
+  return {
+    battingTeam: state.battingTeam,
+    bowlingTeam: state.bowlingTeam,
+    innings: state.innings,
+    score: {
+      runs: state.score.runs,
+      wickets: state.score.wickets,
+      balls: state.score.balls,
+    },
+    batters: { ...state.batters },
+    bowlers: { ...state.bowlers },
+    history: [...state.history],
+  }
+}
 
 
 export const useMatchStore = create<MatchStore>()(
@@ -159,6 +180,7 @@ export const useMatchStore = create<MatchStore>()(
             [config.bowler]: { runs: 0, balls: 0, wickets: 0, maidens: 0, fours: 0, sixes: 0 },
           },
           history: [],
+          inningsRecords: [],
         })
       },
 
@@ -607,8 +629,8 @@ export const useMatchStore = create<MatchStore>()(
           }
         }
 
-        // For wicket events, remove the new batter if it was added
-        if (lastEvent.type === 'wicket' && snapshot.newBatterId) {
+        // For wicket/retire events, remove the new batter if it was added
+        if ((lastEvent.type === 'wicket' || lastEvent.type === 'retire') && snapshot.newBatterId) {
           // Only remove if this was the only event (new batter has no stats)
           // Otherwise keep the batter in case they have stats from other events
           const newBatterStats = updatedBatters[snapshot.newBatterId]
@@ -658,6 +680,66 @@ export const useMatchStore = create<MatchStore>()(
       },
 
       /**
+       * Swap striker and non-striker
+       */
+      swapBatters: () => {
+        const state = get()
+        const { striker, nonStriker, bowler } = state.currentPlayers
+        if (!striker || !nonStriker) return
+
+        set({
+          currentPlayers: {
+            striker: nonStriker,
+            nonStriker: striker,
+            bowler,
+          },
+        })
+      },
+
+      /**
+       * Retire a batter without counting a ball
+       */
+      retireBatter: (retiringBatter, newBatterName, reason) => {
+        const state = get()
+        const { striker, nonStriker, bowler } = state.currentPlayers
+        const trimmedNewBatterName = newBatterName.trim()
+        if (!retiringBatter || !trimmedNewBatterName) return
+
+        // Capture snapshot BEFORE making any changes
+        const snapshot = createSnapshot(state)
+
+        const updatedBatters = { ...state.batters }
+        updatedBatters[trimmedNewBatterName] = {
+          runs: 0,
+          balls: 0,
+          fours: 0,
+          sixes: 0,
+        }
+
+        const updatedPlayers = {
+          striker: retiringBatter === striker ? trimmedNewBatterName : striker,
+          nonStriker: retiringBatter === nonStriker ? trimmedNewBatterName : nonStriker,
+          bowler,
+        }
+
+        const event: BallEvent = {
+          type: 'retire',
+          kind: reason?.trim() || 'retire',
+          snapshot: {
+            ...snapshot,
+            fallenBatsmanId: retiringBatter,
+            newBatterId: trimmedNewBatterName,
+          },
+        }
+
+        set({
+          currentPlayers: updatedPlayers,
+          batters: updatedBatters,
+          history: [...state.history, event],
+        })
+      },
+
+      /**
        * Start second innings
        * 
        * Cricket logic:
@@ -673,6 +755,7 @@ export const useMatchStore = create<MatchStore>()(
       startSecondInnings: (striker, nonStriker, bowler) => {
         const state = get()
         const firstInningsScore = state.score.runs
+        const completedInnings = createInningsRecord(state)
 
         set({
           innings: 2,
@@ -702,6 +785,7 @@ export const useMatchStore = create<MatchStore>()(
             [bowler]: { runs: 0, balls: 0, wickets: 0, maidens: 0, fours: 0, sixes: 0 },
           },
           history: [],
+          inningsRecords: [...state.inningsRecords, completedInnings],
         })
       },
 
@@ -732,6 +816,8 @@ export const useMatchStore = create<MatchStore>()(
           return // Invalid target
         }
 
+        const completedInnings = createInningsRecord(state)
+
         set({
           innings: 2,
           targetScore: target,
@@ -755,6 +841,7 @@ export const useMatchStore = create<MatchStore>()(
           bowlers: {},
           // Keep history intact for scorecard display
           matchStatus: 'IN_PROGRESS',
+          inningsRecords: [...state.inningsRecords, completedInnings],
         })
       },
 
@@ -800,6 +887,8 @@ export const useMatchStore = create<MatchStore>()(
           [trimmedBowler]: { runs: 0, balls: 0, wickets: 0, maidens: 0, fours: 0, sixes: 0 },
         }
 
+        const completedInnings = createInningsRecord(state)
+
         set({
           innings: 2,
           targetScore: target,
@@ -823,6 +912,7 @@ export const useMatchStore = create<MatchStore>()(
           bowlers: newBowlers,
           // Keep history intact for scorecard display
           matchStatus: 'IN_PROGRESS',
+          inningsRecords: [...state.inningsRecords, completedInnings],
         })
       },
 

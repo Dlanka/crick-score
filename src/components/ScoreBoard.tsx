@@ -35,16 +35,25 @@ export function ScoreBoard() {
   return (
     <div className="score-card relative">
       {/* Team Name and Innings */}
-      <div>
+      <div className="flex justify-between items-center">
         <p className="text-base font-semibold text-gray-800">
           {battingTeam || "Team"}, {innings === 1 ? "1st" : "2nd"} inning
         </p>
+
+        {innings === 2 && targetScore > 0 && (
+          <div className="text-right flex gap-1 items-center">
+            <span className="text-sm text-gray-700">Target</span>
+            <span className="text-lg font-bold text-gray-700 tabular-nums">
+              {targetScore}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Score and Overs - Inline */}
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-center ">
         <div className="flex items-baseline gap-2">
-          <span className="text-3xl font-bold text-gray-900 tabular-nums">
+          <span className="text-2xl font-bold text-gray-900 tabular-nums">
             {score.runs} - {score.wickets}
           </span>
           <span className="text-xl font-semibold text-gray-600 tabular-nums">
@@ -52,10 +61,10 @@ export function ScoreBoard() {
           </span>
         </div>
 
-        <div className="flex gap-3">
+        <div className="flex gap-3 items-center">
           <div className="text-right flex gap-1 items-center">
             <span className="text-sm text-gray-500">CRR</span>
-            <span className="text-lg font-semibold text-gray-800 tabular-nums">
+            <span className="text-sm font-semibold text-gray-800 tabular-nums">
               {crr.toFixed(2)}
             </span>
           </div>
@@ -63,7 +72,7 @@ export function ScoreBoard() {
           {rrr !== null && (
             <div className="text-right flex gap-1 items-center">
               <span className="text-sm text-gray-500">RRR</span>
-              <span className="text-lg font-semibold text-gray-800 tabular-nums">
+              <span className="text-sm font-semibold text-gray-800 tabular-nums">
                 {rrr.toFixed(2)}
               </span>
             </div>

@@ -287,7 +287,7 @@ export function ScoringControls({
               disabled={isWideDisabled || disabled}
               className="w-4 h-4 text-yellow-500 border-gray-300 rounded focus:ring-2 focus:ring-yellow-500 focus:ring-offset-1 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             />
-            <span className="text-xs text-gray-700">Wide</span>
+            <span className="text-xs text-gray-700">WD</span>
           </label>
 
           <label
@@ -304,7 +304,7 @@ export function ScoringControls({
               disabled={isNoBallDisabled || disabled}
               className="w-4 h-4 text-yellow-500 border-gray-300 rounded focus:ring-2 focus:ring-yellow-500 focus:ring-offset-1 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             />
-            <span className="text-xs text-gray-700">No ball</span>
+            <span className="text-xs text-gray-700">NB</span>
           </label>
 
           <label
@@ -321,7 +321,7 @@ export function ScoringControls({
               disabled={isByesDisabled || disabled}
               className="w-4 h-4 text-yellow-500 border-gray-300 rounded focus:ring-2 focus:ring-yellow-500 focus:ring-offset-1 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             />
-            <span className="text-xs text-gray-700">Byes</span>
+            <span className="text-xs text-gray-700">B</span>
           </label>
 
           <label
@@ -338,7 +338,7 @@ export function ScoringControls({
               disabled={isLegByesDisabled || disabled}
               className="w-4 h-4 text-yellow-500 border-gray-300 rounded focus:ring-2 focus:ring-yellow-500 focus:ring-offset-1 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             />
-            <span className="text-xs text-gray-700">Leg byes</span>
+            <span className="text-xs text-gray-700">LB</span>
           </label>
 
           <label

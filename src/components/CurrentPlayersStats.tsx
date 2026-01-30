@@ -60,7 +60,9 @@ export function CurrentPlayersStats({ onBowlerClick }: CurrentPlayersStatsProps)
     { byes: 0, legByes: 0, wides: 0, noBalls: 0 }
   )
 
-  const extrasValue = `${extras.byes}B, ${extras.legByes}LB, ${extras.wides}WD, ${extras.noBalls}NB`
+  const extrasTotal =
+    extras.byes + extras.legByes + extras.wides + extras.noBalls
+  const extrasValue = `${extrasTotal} (${extras.wides} WD, ${extras.byes} B, ${extras.legByes} LB, ${extras.noBalls} NB)`
 
   return (
     <div className="w-full space-y-2">
@@ -142,19 +144,19 @@ export function CurrentPlayersStats({ onBowlerClick }: CurrentPlayersStatsProps)
           <thead className="bg-gray-50 border-t-2 border-gray-300">
             <tr>
               <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Bowler
+                Name
               </th>
               <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                 O
               </th>
               <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                M
+              </th>
+              <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                 R
               </th>
               <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                4s
-              </th>
-              <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                6s
+                W
               </th>
               <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                 ER
@@ -176,13 +178,13 @@ export function CurrentPlayersStats({ onBowlerClick }: CurrentPlayersStatsProps)
                   {formatOvers(bowlerStats.balls)}
                 </td>
                 <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-900 text-right tabular-nums">
+                  {bowlerStats.maidens}
+                </td>
+                <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-900 text-right tabular-nums">
                   {bowlerStats.runs}
                 </td>
                 <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-900 text-right tabular-nums">
-                  {bowlerStats.fours}
-                </td>
-                <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-900 text-right tabular-nums">
-                  {bowlerStats.sixes}
+                  {bowlerStats.wickets}
                 </td>
                 <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-900 text-right tabular-nums">
                   {calculateEconomy(bowlerStats.runs, bowlerStats.balls).toFixed(2)}
@@ -195,7 +197,10 @@ export function CurrentPlayersStats({ onBowlerClick }: CurrentPlayersStatsProps)
 
       <div className="border border-gray-200 rounded-md px-3 py-2 flex items-center justify-between bg-white">
         <span className="text-xs font-semibold text-gray-700">Extra</span>
-        <span className="text-xs text-gray-700 tabular-nums">{extrasValue}</span>
+        <span className="text-xs text-gray-700 tabular-nums">
+          <span className="font-semibold text-gray-900">{extrasTotal}</span>
+          <span className="text-gray-700"> ({extras.wides} WD, {extras.byes} B, {extras.legByes} LB, {extras.noBalls} NB)</span>
+        </span>
       </div>
     </div>
   )

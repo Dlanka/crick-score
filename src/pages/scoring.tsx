@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from "react";
+import { ArrowDownUp, Undo2, UserX } from "lucide-react";
 import { useNavigate, Link } from "@tanstack/react-router";
 import { ScoreBoard } from "../components/ScoreBoard";
 import { CurrentOver } from "../components/CurrentOver";
@@ -23,6 +24,8 @@ export function ScoringPage() {
   );
   const bowlers = useMatchStore((state) => state.bowlers);
   const undoLastBall = useMatchStore((state) => state.undoLastBall);
+  const swapBatters = useMatchStore((state) => state.swapBatters);
+  const retireBatter = useMatchStore((state) => state.retireBatter);
   const addWicket = useMatchStore((state) => state.addWicket);
   const addExtra = useMatchStore((state) => state.addExtra);
   const addRun = useMatchStore((state) => state.addRun);
@@ -55,6 +58,10 @@ export function ScoringPage() {
   const [showNewMatchModal, setShowNewMatchModal] = useState(false);
   const [showAbandonModal, setShowAbandonModal] = useState(false);
   const [showHeaderMenu, setShowHeaderMenu] = useState(false);
+  const [showRetireModal, setShowRetireModal] = useState(false);
+  const [retireBatterName, setRetireBatterName] = useState("");
+  const [retireNewBatterName, setRetireNewBatterName] = useState("");
+  const [retireReason, setRetireReason] = useState("");
 
   // Track previous over state to detect completion
   const prevOverRef = useRef({
@@ -213,12 +220,37 @@ export function ScoringPage() {
   // Handle Abandon Match confirmation
   const handleAbandonConfirm = () => {
     abandonMatch();
+    resetMatch();
     setShowAbandonModal(false);
+    navigate({ to: "/" });
   };
 
   // Handle Abandon Match cancel
   const handleAbandonCancel = () => {
     setShowAbandonModal(false);
+  };
+
+  const handleRetireCancel = () => {
+    setShowRetireModal(false);
+    setRetireBatterName("");
+    setRetireNewBatterName("");
+    setRetireReason("");
+  };
+
+  const handleRetireConfirm = () => {
+    const trimmedNewBatterName = retireNewBatterName.trim();
+    if (!retireBatterName || !trimmedNewBatterName) return;
+    if (
+      trimmedNewBatterName.toLowerCase() ===
+        currentPlayers.striker.toLowerCase() ||
+      trimmedNewBatterName.toLowerCase() ===
+        currentPlayers.nonStriker.toLowerCase()
+    ) {
+      return;
+    }
+
+    retireBatter(retireBatterName, trimmedNewBatterName, retireReason);
+    handleRetireCancel();
   };
 
   // Handle Select Bowler confirmation
@@ -506,7 +538,14 @@ export function ScoringPage() {
     <div className="flex flex-col min-h-screen bg-gray-50">
       {/* Green Header */}
       <div className="bg-green-600 text-white px-4 py-3 flex items-center justify-between sticky top-0 z-50">
-        <Link to="/" className="text-white">
+        <button
+          onClick={() => {
+            setShowAbandonModal(true);
+            setShowHeaderMenu(false);
+          }}
+          className="text-white"
+          aria-label="Abandon match"
+        >
           <svg
             className="w-6 h-6"
             fill="none"
@@ -520,25 +559,15 @@ export function ScoringPage() {
               d="M15 19l-7-7 7-7"
             />
           </svg>
-        </Link>
-        <h1 className="text-lg font-bold flex-1 text-center">{matchTitle}</h1>
+        </button>
+        <h1 className="text-lg font-bold flex-1 text-left">{matchTitle}</h1>
         <div className="flex items-center gap-3 relative">
-          <svg
-            className="w-5 h-5"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
+          <Link
+            to="/summary"
+            className="text-xs font-semibold px-2 py-1 rounded-md bg-white/15 hover:bg-white/25 transition-colors"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-            />
-          </svg>
-          <div className="w-6 h-6 bg-white bg-opacity-20 rounded flex items-center justify-center text-xs font-semibold">
-            {innings}:{score.wickets}
-          </div>
+            Summary
+          </Link>
           <button
             onClick={() => setShowHeaderMenu((prev) => !prev)}
             className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors"
@@ -612,14 +641,6 @@ export function ScoringPage() {
             </div>
           )}
 
-          {innings === 2 && !matchComplete && (
-            <div className="text-center">
-              <p className="text-base font-medium text-gray-700">
-                Target: {targetScore}
-              </p>
-            </div>
-          )}
-
           {/* Match Result */}
           {matchComplete && matchResult && (
             <div className="score-card bg-green-50 border-2 border-green-500">
@@ -678,7 +699,8 @@ export function ScoringPage() {
                       showSelectBowlerModal ||
                       showSkipFirstInningsModal ||
                       showNewMatchModal ||
-                      showAbandonModal
+                      showAbandonModal ||
+                      showRetireModal
                     }
                   />
 
@@ -691,7 +713,8 @@ export function ScoringPage() {
                         showSelectBowlerModal ||
                         showSkipFirstInningsModal ||
                         showNewMatchModal ||
-                        showAbandonModal
+                        showAbandonModal ||
+                        showRetireModal
                       }
                     />
                   </div>
@@ -703,14 +726,32 @@ export function ScoringPage() {
                         disabled={history.length === 0}
                         className="score-button bg-green-500 text-white hover:bg-green-600 shadow-sm active:shadow-none disabled:opacity-50 disabled:cursor-not-allowed px-4 py-1.5 text-sm min-h-0"
                       >
-                        Undo
+                        <span className="inline-flex items-center gap-1.5">
+                          <Undo2 className="w-4 h-4" aria-hidden="true" />
+                          Undo
+                        </span>
                       </button>
                       <div className="flex items-center gap-2 justify-end">
-                        <button className="score-button bg-gray-500 text-white hover:bg-gray-600 shadow-sm active:shadow-none px-4 py-1.5 text-sm min-h-0">
-                          Swap Batsman
+                        <button
+                          onClick={swapBatters}
+                          className="score-button bg-gray-500 text-white hover:bg-gray-600 shadow-sm active:shadow-none px-4 py-1.5 text-sm min-h-0"
+                        >
+                          <span className="inline-flex items-center gap-1.5">
+                            <ArrowDownUp
+                              className="w-4 h-4"
+                              aria-hidden="true"
+                            />
+                            Swap
+                          </span>
                         </button>
-                        <button className="score-button bg-red-500 text-white hover:bg-red-600 shadow-sm active:shadow-none px-4 py-1.5 text-sm min-h-0">
-                          Retire
+                        <button
+                          onClick={() => setShowRetireModal(true)}
+                          className="score-button bg-red-500 text-white hover:bg-red-600 shadow-sm active:shadow-none px-4 py-1.5 text-sm min-h-0"
+                        >
+                          <span className="inline-flex items-center gap-1.5">
+                            <UserX className="w-4 h-4" aria-hidden="true" />
+                            Retire
+                          </span>
                         </button>
                       </div>
                     </div>
@@ -1143,6 +1184,100 @@ export function ScoringPage() {
               <button
                 onClick={handleAbandonConfirm}
                 className="flex-1 score-button bg-red-500 text-white hover:bg-red-600 touch-target"
+              >
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Retire Batter Modal */}
+      {showRetireModal && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              handleRetireCancel();
+            }
+          }}
+        >
+          <div
+            className="bg-white rounded-lg p-6 w-full max-w-md space-y-4 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="text-xl font-bold text-gray-900">Retire Batter</h2>
+
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Select batter
+                </label>
+                <select
+                  value={retireBatterName}
+                  onChange={(e) => setRetireBatterName(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent bg-white"
+                >
+                  <option value="">Select batter...</option>
+                  {currentPlayers.striker && (
+                    <option value={currentPlayers.striker}>
+                      {currentPlayers.striker} (Striker)
+                    </option>
+                  )}
+                  {currentPlayers.nonStriker && (
+                    <option value={currentPlayers.nonStriker}>
+                      {currentPlayers.nonStriker} (Non-Striker)
+                    </option>
+                  )}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  New batter name
+                </label>
+                <input
+                  type="text"
+                  value={retireNewBatterName}
+                  onChange={(e) => setRetireNewBatterName(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                  placeholder="Enter new batter name"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Reason (optional)
+                </label>
+                <input
+                  type="text"
+                  value={retireReason}
+                  onChange={(e) => setRetireReason(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                  placeholder="Enter reason"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3 pt-2">
+              <button
+                onClick={handleRetireCancel}
+                className="flex-1 score-button bg-gray-300 text-gray-700 hover:bg-gray-400 touch-target"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleRetireConfirm}
+                disabled={
+                  !retireBatterName ||
+                  !retireNewBatterName.trim() ||
+                  retireNewBatterName.trim().toLowerCase() ===
+                    currentPlayers.striker.toLowerCase() ||
+                  retireNewBatterName.trim().toLowerCase() ===
+                    currentPlayers.nonStriker.toLowerCase()
+                }
+                className="flex-1 score-button bg-red-500 text-white hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed touch-target"
               >
                 Confirm
               </button>

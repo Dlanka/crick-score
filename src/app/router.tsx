@@ -1,6 +1,7 @@
 import { createRouter, createRootRoute, createRoute, Outlet, redirect } from '@tanstack/react-router'
 import { SetupPage } from '../pages/setup'
 import { ScoringPage } from '../pages/scoring'
+import { SummaryPage } from '../pages/summary'
 
 // Helper to check if match exists
 const hasActiveMatch = (): boolean => {
@@ -58,8 +59,20 @@ const scoringRoute = createRoute({
   component: ScoringPage,
 })
 
+// Summary route
+const summaryRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/summary',
+  beforeLoad: () => {
+    if (!hasActiveMatch()) {
+      throw redirect({ to: '/' })
+    }
+  },
+  component: SummaryPage,
+})
+
 // Create route tree
-const routeTree = rootRoute.addChildren([indexRoute, scoringRoute])
+const routeTree = rootRoute.addChildren([indexRoute, scoringRoute, summaryRoute])
 
 // Create router
 export const router = createRouter({ routeTree })
