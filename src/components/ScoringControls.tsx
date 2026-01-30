@@ -1,6 +1,13 @@
 import { useState, useEffect, useRef } from "react";
 
-export type WicketType = "bowled" | "caught" | "lbw" | "stumping" | "hitWicket" | "runOutStriker" | "runOutNonStriker";
+export type WicketType =
+  | "bowled"
+  | "caught"
+  | "lbw"
+  | "stumping"
+  | "hitWicket"
+  | "runOutStriker"
+  | "runOutNonStriker";
 
 interface ScoringControlsProps {
   onWideChange: (checked: boolean) => void;
@@ -193,7 +200,12 @@ export function ScoringControls({
 
   // Notify parent of wicket state changes
   useEffect(() => {
-    onWicketStateChangeRef.current({ wicket, wicketType, newBatterName, runOutBatsman: '' });
+    onWicketStateChangeRef.current({
+      wicket,
+      wicketType,
+      newBatterName,
+      runOutBatsman: "",
+    });
   }, [wicket, wicketType, newBatterName]); // Only depend on state values
 
   // Calculate validation errors for wicket + extras combinations
@@ -210,7 +222,11 @@ export function ScoringControls({
   // If wicket is selected and noBall is selected, wicketType must be a run-out type (if selected)
   // If wicketType is not selected yet but noBall is selected, we can't validate yet
   if (wicket && noBall) {
-    if (wicketType && wicketType !== "runOutStriker" && wicketType !== "runOutNonStriker") {
+    if (
+      wicketType &&
+      wicketType !== "runOutStriker" &&
+      wicketType !== "runOutNonStriker"
+    ) {
       validationErrors.push("Wicket with No ball is only allowed for Run Out");
       isValid = false;
     }
@@ -246,7 +262,7 @@ export function ScoringControls({
 
   return (
     <div className="space-y-2">
-      {/* Extras Group */}
+      {/* Extras + Wicket Group */}
       <div className="space-y-1">
         {/* Validation error messages */}
         {validationErrors.length > 0 && (
@@ -256,9 +272,9 @@ export function ScoringControls({
             ))}
           </div>
         )}
-        <div className="flex flex-row flex-wrap justify-between">
+        <div className="flex flex-row flex-nowrap gap-4">
           <label
-            className={`flex items-center gap-1.5 py-1 px-1.5 rounded transition-colors touch-target ${
+            className={`flex items-center gap-1 py-0.5 px-1 rounded transition-colors touch-target ${
               isWideDisabled
                 ? "opacity-50 cursor-not-allowed"
                 : "cursor-pointer hover:bg-gray-100"
@@ -271,11 +287,11 @@ export function ScoringControls({
               disabled={isWideDisabled || disabled}
               className="w-4 h-4 text-yellow-500 border-gray-300 rounded focus:ring-2 focus:ring-yellow-500 focus:ring-offset-1 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             />
-            <span className="text-sm text-gray-700">Wide</span>
+            <span className="text-xs text-gray-700">Wide</span>
           </label>
 
           <label
-            className={`flex items-center gap-1.5 py-1 px-1.5 rounded transition-colors touch-target ${
+            className={`flex items-center gap-1 py-0.5 px-1 rounded transition-colors touch-target ${
               isNoBallDisabled
                 ? "opacity-50 cursor-not-allowed"
                 : "cursor-pointer hover:bg-gray-100"
@@ -288,11 +304,11 @@ export function ScoringControls({
               disabled={isNoBallDisabled || disabled}
               className="w-4 h-4 text-yellow-500 border-gray-300 rounded focus:ring-2 focus:ring-yellow-500 focus:ring-offset-1 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             />
-            <span className="text-sm text-gray-700">No ball</span>
+            <span className="text-xs text-gray-700">No ball</span>
           </label>
 
           <label
-            className={`flex items-center gap-1.5 py-1 px-1.5 rounded transition-colors touch-target ${
+            className={`flex items-center gap-1 py-0.5 px-1 rounded transition-colors touch-target ${
               isByesDisabled
                 ? "opacity-50 cursor-not-allowed"
                 : "cursor-pointer hover:bg-gray-100"
@@ -305,11 +321,11 @@ export function ScoringControls({
               disabled={isByesDisabled || disabled}
               className="w-4 h-4 text-yellow-500 border-gray-300 rounded focus:ring-2 focus:ring-yellow-500 focus:ring-offset-1 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             />
-            <span className="text-sm text-gray-700">Byes</span>
+            <span className="text-xs text-gray-700">Byes</span>
           </label>
 
           <label
-            className={`flex items-center gap-1.5 py-1 px-1.5 rounded transition-colors touch-target ${
+            className={`flex items-center gap-1 py-0.5 px-1 rounded transition-colors touch-target ${
               isLegByesDisabled
                 ? "opacity-50 cursor-not-allowed"
                 : "cursor-pointer hover:bg-gray-100"
@@ -322,20 +338,16 @@ export function ScoringControls({
               disabled={isLegByesDisabled || disabled}
               className="w-4 h-4 text-yellow-500 border-gray-300 rounded focus:ring-2 focus:ring-yellow-500 focus:ring-offset-1 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             />
-            <span className="text-sm text-gray-700">Leg byes</span>
+            <span className="text-xs text-gray-700">Leg byes</span>
           </label>
-        </div>
-      </div>
 
-      {/* Wicket Group */}
-      <div className="space-y-1">
-        <label
-          className={`flex items-center gap-1.5 py-1 px-1.5 rounded transition-colors touch-target ${
-            isWicketDisabled
-              ? "opacity-50 cursor-not-allowed"
-              : "cursor-pointer hover:bg-gray-100"
-          }`}
-        >
+          <label
+            className={`flex items-center gap-1 py-0.5 px-1 rounded transition-colors touch-target ${
+              isWicketDisabled
+                ? "opacity-50 cursor-not-allowed"
+                : "cursor-pointer hover:bg-gray-100"
+            }`}
+          >
             <input
               type="checkbox"
               checked={wicket}
@@ -343,8 +355,9 @@ export function ScoringControls({
               disabled={isWicketDisabled || disabled}
               className="w-4 h-4 text-red-500 border-gray-300 rounded focus:ring-2 focus:ring-red-500 focus:ring-offset-1 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             />
-          <span className="text-sm text-gray-700">Wicket</span>
-        </label>
+            <span className="text-xs text-gray-700">Wicket</span>
+          </label>
+        </div>
       </div>
     </div>
   );

@@ -4,6 +4,8 @@ export function ScoreBoard() {
   const battingTeam = useMatchStore((state) => state.battingTeam);
   const innings = useMatchStore((state) => state.innings);
   const score = useMatchStore((state) => state.score);
+  const targetScore = useMatchStore((state) => state.targetScore);
+  const oversLimit = useMatchStore((state) => state.oversLimit);
 
   const overs = Math.floor(score.balls / 6);
   const balls = score.balls % 6;
@@ -17,16 +19,21 @@ export function ScoreBoard() {
 
   const crr = calculateCRR();
 
-  return (
-    <div className="relative">
-      {/* CRR - Absolute positioned at top */}
-      <div className="absolute top-0 right-0 text-right">
-        <span className="text-sm text-gray-500">CRR</span>
-        <p className="text-lg font-semibold text-gray-800 tabular-nums">
-          {crr.toFixed(2)}
-        </p>
-      </div>
+  // Required Run Rate (RRR) for second innings only
+  const calculateRRR = (): number | null => {
+    if (innings !== 2 || targetScore <= 0) return null;
+    const remainingRuns = targetScore - score.runs;
+    if (remainingRuns <= 0) return null;
+    const oversBowled = score.balls / 6;
+    const remainingOvers = oversLimit - oversBowled;
+    if (remainingOvers <= 0) return null;
+    return Math.round((remainingRuns / remainingOvers) * 100) / 100;
+  };
 
+  const rrr = calculateRRR();
+
+  return (
+    <div className="score-card relative">
       {/* Team Name and Innings */}
       <div>
         <p className="text-base font-semibold text-gray-800">
@@ -35,13 +42,33 @@ export function ScoreBoard() {
       </div>
 
       {/* Score and Overs - Inline */}
-      <div className="flex items-baseline gap-2">
-        <span className="text-3xl font-bold text-gray-900 tabular-nums">
-          {score.runs} - {score.wickets}
-        </span>
-        <span className="text-xl font-semibold text-gray-600 tabular-nums">
-          ({overs}.{balls})
-        </span>
+      <div className="flex justify-between items-center">
+        <div className="flex items-baseline gap-2">
+          <span className="text-3xl font-bold text-gray-900 tabular-nums">
+            {score.runs} - {score.wickets}
+          </span>
+          <span className="text-xl font-semibold text-gray-600 tabular-nums">
+            ({overs}.{balls})
+          </span>
+        </div>
+
+        <div className="flex gap-3">
+          <div className="text-right flex gap-1 items-center">
+            <span className="text-sm text-gray-500">CRR</span>
+            <span className="text-lg font-semibold text-gray-800 tabular-nums">
+              {crr.toFixed(2)}
+            </span>
+          </div>
+
+          {rrr !== null && (
+            <div className="text-right flex gap-1 items-center">
+              <span className="text-sm text-gray-500">RRR</span>
+              <span className="text-lg font-semibold text-gray-800 tabular-nums">
+                {rrr.toFixed(2)}
+              </span>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
