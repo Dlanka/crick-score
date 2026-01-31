@@ -32,6 +32,15 @@ export function ScoreBoard() {
 
   const rrr = calculateRRR();
 
+  const ballsRemaining = Math.max(oversLimit * 6 - score.balls, 0);
+  const runsRemaining = Math.max(targetScore - score.runs, 0);
+  const showChaseRequired =
+    innings === 2 &&
+    targetScore > 0 &&
+    runsRemaining > 0 &&
+    ballsRemaining > 0 &&
+    score.wickets < 10;
+
   return (
     <div className="score-card relative">
       {/* Team Name and Innings */}
@@ -79,6 +88,20 @@ export function ScoreBoard() {
           )}
         </div>
       </div>
+
+      {showChaseRequired && (
+        <div className="mt-2 text-sm text-gray-600 text-left">
+          Need{" "}
+          <span className="font-semibold text-gray-900">
+            {runsRemaining}
+          </span>{" "}
+          runs from{" "}
+          <span className="font-semibold text-gray-900">
+            {ballsRemaining}
+          </span>{" "}
+          balls
+        </div>
+      )}
     </div>
   );
 }

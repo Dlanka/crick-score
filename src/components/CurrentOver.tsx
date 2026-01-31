@@ -12,7 +12,11 @@ type BallDisplay = {
   extraValue?: number // Additional runs for extras
 }
 
-export function CurrentOver() {
+export function CurrentOver({
+  showLastCompletedOver = false,
+}: {
+  showLastCompletedOver?: boolean
+}) {
   // Subscribe to both currentOver and history separately to ensure immediate updates
   // Using separate selectors prevents infinite re-render loops
   const currentOver = useMatchStore((state) => state.currentOver)
@@ -25,8 +29,14 @@ export function CurrentOver() {
   let validBallsSeen = 0
   let startIndex = history.length
 
-  // Find the starting index of the current over
-  // Count backwards until we've seen currentOver.balls.length valid balls
+  const showLastOver =
+    showLastCompletedOver &&
+    currentOver.balls.length === 0 &&
+    history.length > 0
+  const targetValidBalls = showLastOver ? 6 : currentOver.balls.length
+
+  // Find the starting index of the current (or last completed) over
+  // Count backwards until we've seen targetValidBalls valid balls
   for (let i = history.length - 1; i >= 0; i--) {
     const event = history[i]
     
@@ -39,7 +49,7 @@ export function CurrentOver() {
     if (countsAsBall) {
       validBallsSeen++
       // If we've seen more valid balls than in current over, we've found the start
-      if (validBallsSeen > currentOver.balls.length) {
+      if (validBallsSeen > targetValidBalls) {
         startIndex = i + 1
         break
       }
@@ -51,7 +61,7 @@ export function CurrentOver() {
     }
   }
 
-  // Now collect all events from startIndex to the end (these are all in current over)
+  // Now collect all events from startIndex to the end (these are all in target over)
   for (let i = startIndex; i < history.length; i++) {
     const event = history[i]
     

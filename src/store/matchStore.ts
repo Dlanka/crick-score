@@ -367,6 +367,16 @@ export const useMatchStore = create<MatchStore>()(
             balls: strikerStats.balls + 1,
             // Runs don't count to batter for byes/leg byes (they're extras)
           }
+        } else if (type === 'noBall' && additionalRuns > 0) {
+          // No Ball: runs off the bat count to the striker, but no ball faced
+          const strikerStats = ensureBatter(state.batters[striker])
+          updatedBatters[striker] = {
+            ...strikerStats,
+            runs: strikerStats.runs + additionalRuns,
+            // Boundaries off a no-ball count for the batter
+            fours: additionalRuns === 4 ? strikerStats.fours + 1 : strikerStats.fours,
+            sixes: additionalRuns === 6 ? strikerStats.sixes + 1 : strikerStats.sixes,
+          }
         }
 
         // Ensure non-striker exists

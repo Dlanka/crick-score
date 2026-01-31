@@ -58,7 +58,7 @@ const getInningsExtras = (history: BallEvent[]) => {
           acc.wides += value;
           break;
         case "noBall":
-          acc.noBalls += value;
+          acc.noBalls += 1;
           break;
         default:
           break;
@@ -271,6 +271,12 @@ export function SummaryPage() {
                         extras.legByes +
                         extras.wides +
                         extras.noBalls;
+                      const extrasParts = [
+                        extras.wides > 0 ? `${extras.wides} WD` : null,
+                        extras.byes > 0 ? `${extras.byes} B` : null,
+                        extras.legByes > 0 ? `${extras.legByes} LB` : null,
+                        extras.noBalls > 0 ? `${extras.noBalls} NB` : null,
+                      ].filter(Boolean);
                       return (
                         <>
                           <tr>
@@ -283,9 +289,10 @@ export function SummaryPage() {
                             >
                               <span className="font-semibold text-gray-900">
                                 {extrasTotal}
-                              </span>{" "}
-                              ({extras.wides} WD, {extras.byes} B,{" "}
-                              {extras.legByes} LB, {extras.noBalls} NB)
+                              </span>
+                              {extrasTotal > 0 && (
+                                <> ({extrasParts.join(", ")})</>
+                              )}
                             </td>
                           </tr>
                           <tr>

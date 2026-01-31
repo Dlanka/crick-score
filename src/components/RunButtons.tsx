@@ -20,10 +20,10 @@ export function RunButtons({ onRunChange, disabled = false }: RunButtonsProps) {
           key={runs}
           onClick={() => handleRun(runs)}
           disabled={disabled}
-          className={`w-12 h-12 rounded-full border-2 font-bold text-base shadow-md transition-all duration-75 flex items-center justify-center touch-target ${
+          className={`w-12 h-12 rounded-full border-2 font-bold text-base transition-all duration-75 flex items-center justify-center touch-target ${
             disabled
               ? "border-gray-300 bg-gray-100 text-gray-400 cursor-not-allowed opacity-50"
-              : "border-green-500 bg-white text-green-600 active:shadow-none active:scale-95 active:bg-green-500 active:text-white"
+              : "border-green-500 bg-white text-green-600 active:scale-95 active:bg-green-500 active:text-white"
           }`}
         >
           {runs}

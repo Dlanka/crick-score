@@ -50,7 +50,7 @@ export function CurrentPlayersStats({ onBowlerClick }: CurrentPlayersStatsProps)
           acc.wides += value
           break
         case 'noBall':
-          acc.noBalls += value
+          acc.noBalls += 1
           break
         default:
           break
@@ -198,7 +198,21 @@ export function CurrentPlayersStats({ onBowlerClick }: CurrentPlayersStatsProps)
         <span className="text-xs font-semibold text-gray-700">Extra</span>
         <span className="text-xs text-gray-700 tabular-nums">
           <span className="font-semibold text-gray-900">{extrasTotal}</span>
-          <span className="text-gray-700"> ({extras.wides} WD, {extras.byes} B, {extras.legByes} LB, {extras.noBalls} NB)</span>
+          {extrasTotal > 0 && (
+            <span className="text-gray-700">
+              {" "}
+              (
+              {[
+                extras.wides > 0 ? `${extras.wides} WD` : null,
+                extras.byes > 0 ? `${extras.byes} B` : null,
+                extras.legByes > 0 ? `${extras.legByes} LB` : null,
+                extras.noBalls > 0 ? `${extras.noBalls} NB` : null,
+              ]
+                .filter(Boolean)
+                .join(", ")}
+              )
+            </span>
+          )}
         </span>
       </div>
     </div>

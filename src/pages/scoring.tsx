@@ -24,6 +24,7 @@ export function ScoringPage() {
   );
   const bowlers = useMatchStore((state) => state.bowlers);
   const undoLastBall = useMatchStore((state) => state.undoLastBall);
+  const setMatchStatus = useMatchStore((state) => state.setMatchStatus);
   const swapBatters = useMatchStore((state) => state.swapBatters);
   const retireBatter = useMatchStore((state) => state.retireBatter);
   const addWicket = useMatchStore((state) => state.addWicket);
@@ -125,8 +126,13 @@ export function ScoringPage() {
     const justCompletedOver =
       wasOverInProgress && isOverNowReset && isLegalBallMultiple;
 
-    // Only open modal if we just completed an over and modal is not already open
-    if (justCompletedOver && !showSelectBowlerModal) {
+    const oversCompleted = Math.floor(score.balls / 6) >= oversLimit;
+    const allWicketsFallen = score.wickets >= 10;
+    const inningsEnded =
+      (innings === 1 || innings === 2) && (oversCompleted || allWicketsFallen);
+
+    // Only open modal if we just completed an over, modal not open, and innings not ended
+    if (justCompletedOver && !showSelectBowlerModal && !inningsEnded) {
       setShowSelectBowlerModal(true);
     }
 
@@ -140,6 +146,9 @@ export function ScoringPage() {
     currentOver.ballNumber,
     currentOver.balls.length,
     score.balls,
+    score.wickets,
+    oversLimit,
+    innings,
     showSelectBowlerModal,
   ]);
 
@@ -159,8 +168,16 @@ export function ScoringPage() {
       secondInningsOversCompleted ||
       secondInningsAllWicketsFallen);
 
-  // Get setMatchStatus action
-  const setMatchStatus = useMatchStore((state) => state.setMatchStatus);
+  const scoringLockedByStatus =
+    matchComplete || matchStatus === "COMPLETE" || matchStatus === "ABANDONED";
+  const scoringLockedByUI =
+    showSelectBowlerModal ||
+    showSkipFirstInningsModal ||
+    showNewMatchModal ||
+    showAbandonModal ||
+    showRetireModal;
+  const firstInningsLocked = firstInningsEnded && innings === 1;
+  const showScoringControls = matchStatus !== "ABANDONED";
 
   // Update matchStatus to COMPLETE when match ends
   useEffect(() => {
@@ -189,6 +206,7 @@ export function ScoringPage() {
   };
 
   const matchResult = getMatchResult();
+
 
   // Handle New Match button click (from bottom card)
   const handleNewMatchClick = () => {
@@ -534,6 +552,13 @@ export function ScoringPage() {
     setPendingRunValue(null);
   };
 
+  const handleUndo = () => {
+    undoLastBall();
+    if (matchStatus === "COMPLETE") {
+      setMatchStatus("IN_PROGRESS");
+    }
+  };
+
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
       {/* Green Header */}
@@ -673,17 +698,14 @@ export function ScoringPage() {
                 <h2 className="text-sm font-semibold text-gray-700 whitespace-nowrap">
                   This over:
                 </h2>
-                <CurrentOver />
+                <CurrentOver showLastCompletedOver={firstInningsEnded} />
               </div>
             </div>
           </div>
 
           {/* Scoring Controls - hide if first innings ended or match complete */}
           {/* Also disable all scoring controls when matchStatus === 'COMPLETE' or 'ABANDONED' or Select Bowler modal is open or Skip First Innings modal is open */}
-          {!firstInningsEnded &&
-            !matchComplete &&
-            matchStatus !== "COMPLETE" &&
-            matchStatus !== "ABANDONED" && (
+          {showScoringControls && (
               <div className="space-y-4">
                 {/* Scoring Controls + Run Buttons + Actions - Combined Card */}
                 <div className="score-card w-full">
@@ -696,11 +718,9 @@ export function ScoringPage() {
                     onValidationChange={(isValid) => setIsScoringValid(isValid)}
                     resetTrigger={resetTrigger}
                     disabled={
-                      showSelectBowlerModal ||
-                      showSkipFirstInningsModal ||
-                      showNewMatchModal ||
-                      showAbandonModal ||
-                      showRetireModal
+                      scoringLockedByUI ||
+                      firstInningsLocked ||
+                      scoringLockedByStatus
                     }
                   />
 
@@ -710,11 +730,9 @@ export function ScoringPage() {
                       resetTrigger={resetTrigger}
                       disabled={
                         !isScoringValid ||
-                        showSelectBowlerModal ||
-                        showSkipFirstInningsModal ||
-                        showNewMatchModal ||
-                        showAbandonModal ||
-                        showRetireModal
+                        scoringLockedByUI ||
+                        firstInningsLocked ||
+                        scoringLockedByStatus
                       }
                     />
                   </div>
@@ -722,8 +740,8 @@ export function ScoringPage() {
                   <div className="mt-4 pt-3 border-t border-gray-200">
                     <div className="flex flex-row gap-2 justify-between">
                       <button
-                        onClick={undoLastBall}
-                        disabled={history.length === 0}
+                        onClick={handleUndo}
+                        disabled={history.length === 0 || scoringLockedByUI}
                         className="score-button bg-green-500 text-white hover:bg-green-600 shadow-sm active:shadow-none disabled:opacity-50 disabled:cursor-not-allowed px-4 py-1.5 text-sm min-h-0"
                       >
                         <span className="inline-flex items-center gap-1.5">
@@ -733,8 +751,13 @@ export function ScoringPage() {
                       </button>
                       <div className="flex items-center gap-2 justify-end">
                         <button
-                          onClick={swapBatters}
-                          className="score-button bg-gray-500 text-white hover:bg-gray-600 shadow-sm active:shadow-none px-4 py-1.5 text-sm min-h-0"
+                        onClick={swapBatters}
+                          disabled={
+                            scoringLockedByUI ||
+                            firstInningsLocked ||
+                            scoringLockedByStatus
+                          }
+                          className="score-button bg-gray-500 text-white hover:bg-gray-600 shadow-sm active:shadow-none disabled:opacity-50 disabled:cursor-not-allowed px-4 py-1.5 text-sm min-h-0"
                         >
                           <span className="inline-flex items-center gap-1.5">
                             <ArrowDownUp
@@ -745,8 +768,13 @@ export function ScoringPage() {
                           </span>
                         </button>
                         <button
-                          onClick={() => setShowRetireModal(true)}
-                          className="score-button bg-red-500 text-white hover:bg-red-600 shadow-sm active:shadow-none px-4 py-1.5 text-sm min-h-0"
+                        onClick={() => setShowRetireModal(true)}
+                          disabled={
+                            scoringLockedByUI ||
+                            firstInningsLocked ||
+                            scoringLockedByStatus
+                          }
+                          className="score-button bg-red-500 text-white hover:bg-red-600 shadow-sm active:shadow-none disabled:opacity-50 disabled:cursor-not-allowed px-4 py-1.5 text-sm min-h-0"
                         >
                           <span className="inline-flex items-center gap-1.5">
                             <UserX className="w-4 h-4" aria-hidden="true" />
